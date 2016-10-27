@@ -1,0 +1,15 @@
+[package]
+name = "echoserver"
+version = "0.0.1"
+authors = ["Greg Dallavalle <greg.dallavalle@gmail.com>"]
+
+[profile.release]
+lto = true
+panic = "abort"
+
+[dependencies]
+iron = "*"
+router = "*"
+bodyparser = "*"
+clap = "2"
+chan-signal = "*"

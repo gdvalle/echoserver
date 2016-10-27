@@ -1,0 +1,38 @@
+sudo: false
+
+language: generic
+
+env:
+  global:
+  - 'PATH=$HOME/.cargo/bin/:$PATH'
+
+matrix:
+  include:
+  - os: linux
+    env: TARGET=x86_64-unknown-linux-musl
+  #- os: osx
+  #  env: TARGET=x86_64-apple-darwin
+
+addons:
+  apt:
+    packages:
+    - upx-ucl
+
+script:
+- make bootstrap all
+- cp target/$TARGET/release/echoserver echoserver-$TRAVIS_TAG-$TARGET
+
+before_deploy:
+# This is a hack to fix deploy failures from dpl.
+# Apparently they thought it wasn't worth pinning octokit.
+- rvm 1.9.3 do gem install octokit -v 4.3.0
+
+deploy:
+  provider: releases
+  api_key:
+    secure: sNYcwp2wMQGk+D0EbRMvmirDej7v/DDgcmC6UjwiMakOrTdtD6yHPbkDBKlNIK9N6scgwezAek747J8awCvtIOTF0eAGnPA6L+aLz/nCHJtIFzyIOE1D/d6hHZVE2LeczLhDdWGKm5ZOwLc74TexX1r/5VhlzXYi+j2mQn+/sdoy2We3JqHlpvF1LQQm5BUDkjpDzm+VbtmlZwDaZmZPUAOjHKEG9t34OFQJDOuoXR2ppYiUhs4de6GNWdnBTKMxzrQMllKw4OSx8jsYLtMpRnx5+GLsq6fZ6tB+y4kIgIB4trg+2rSdZKMpm//XsXXj1Sa9rz4d7pwThoTwrazE7zYGRZgLPbtbZ4Oo/kxkSMKtJqcaU7zH4Ds8IeFAwjta1K4aJBAYcbiBjExUx/gDXYtxcsg5K+3Tec6FsD3ODjbBWn81gWc/ltTAg60eocDBNIlpWpZSsfstEy9d/4E97O3PSsAjKXEl+zLaY1k45fPHPHoggnFC/GYpv/q969ezlrCb/MbLFB2qmzeETA2QiIR0vuWC0fmiRaYPj+BhfIcVwx1UoAEqFQt5wjg7+F1r9eNxf1i+JhNkxy9ThotP0rcVeChEC2RUOIip9AtDJnwFcGQSG8Kn1fuHoTb0QMZHRQGMjX51PkjcY3inGx6iT3YgoCBIgO3fp4DSapCtyZQ=
+  file: echoserver-$TRAVIS_TAG-$TARGET
+  skip_cleanup: true
+  on:
+    repo: gdvalle/echoserver
+    tags: true
