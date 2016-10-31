@@ -1,6 +1,6 @@
 [root]
 name = "echoserver"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "chan-signal 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.16.3 (registry+https://github.com/rust-lang/crates.io-index)",

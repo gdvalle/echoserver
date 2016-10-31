@@ -44,7 +44,7 @@ fn parse_addresses(listeners: clap::Values) -> Vec<String> {
 
 fn main() {
     let args = App::new("echoserver")
-        .version("0.0.1")
+        .version("0.0.2")
         .about("HTTP server that prints requests and returns an empty 200.")
         .arg(Arg::with_name("listen")
             .short("l")
