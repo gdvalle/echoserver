@@ -10,6 +10,5 @@ panic = "abort"
 [dependencies]
 iron = "*"
 router = "*"
-bodyparser = "*"
 clap = "2"
 chan-signal = "*"

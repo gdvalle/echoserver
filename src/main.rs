@@ -1,20 +1,25 @@
 extern crate iron;
-extern crate bodyparser;
 extern crate clap;
 extern crate chan_signal;
 
 use clap::{Arg, App};
-use iron::prelude::{Iron, IronResult, Request, Response, Plugin};
+use iron::prelude::{Iron, IronResult, Request, Response};
+use std::io::Read;
 use iron::status;
 use chan_signal::Signal;
 
 fn echo_handler(req: &mut Request) -> IronResult<Response> {
-    let body = req.get::<bodyparser::Raw>();
-    match body {
-        Ok(Some(body)) => println!("{} {}\n{}", req.method, req.url, body),
-        Ok(None) => println!("{} {}", req.method, req.url),
-        Err(err) => println!("Error: {:?}", err),
-    }
+    let mut body = String::new();
+    let body_size = match req.body.read_to_string(&mut body) {
+        Ok(x) => x,
+        Err(_) => 0,
+    };
+
+    match body_size {
+        0 => println!("{} {}", req.method, req.url),
+        _ => println!("{} {}\n{}", req.method, req.url, body),
+    };
+
     Ok(Response::with(status::Ok))
 }
 
@@ -38,7 +43,7 @@ fn parse_addresses(listeners: clap::Values) -> Vec<String> {
 }
 
 fn main() {
-    let matches = App::new("echoserver")
+    let args = App::new("echoserver")
         .version("0.0.1")
         .about("HTTP server that prints requests and returns an empty 200.")
         .arg(Arg::with_name("listen")
@@ -51,7 +56,7 @@ fn main() {
             .takes_value(true))
         .get_matches();
 
-    let addresses = parse_addresses(matches.values_of("listen").unwrap());
+    let addresses = parse_addresses(args.values_of("listen").unwrap());
 
     let mut servers = Vec::new();
 
