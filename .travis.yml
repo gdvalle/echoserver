@@ -22,11 +22,6 @@ script:
 - make bootstrap all
 - cp target/$TARGET/release/echoserver echoserver-$TRAVIS_TAG-$TARGET
 
-before_deploy:
-# This is a hack to fix deploy failures from dpl.
-# Apparently they thought it wasn't worth pinning octokit.
-- rvm 1.9.3 do gem install octokit -v 4.3.0
-
 deploy:
   provider: releases
   api_key:
