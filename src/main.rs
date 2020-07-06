@@ -24,45 +24,40 @@ async fn echo(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
         None => parts.uri.path(),
     };
 
-    let stdout = io::stdout();
-    let mut handle = stdout.lock();
-    let output_text = [
-        format!("{} {}\n{:?}\n", parts.method, request_path, parts.headers).as_bytes(),
+    let headers: Vec<u8> = parts
+        .headers
+        .iter()
+        .map(|(key, value)| {
+            [
+                key.as_str().as_bytes(),
+                &b": "[..],
+                value.as_bytes(),
+                &b"\n"[..],
+            ]
+            .concat()
+        })
+        .flatten()
+        .collect();
+
+    let output = [
+        format!("{} {}\n", parts.method, request_path).as_bytes(),
+        &headers,
         &entire_body,
         b"\n",
     ]
     .concat();
 
-    if let Err(e) = handle.write_all(&output_text) {
+    if let Err(e) = io::stdout().write_all(&output) {
         eprintln!("Failed writing to stdout: {}", e);
     }
 
-    Ok(Response::new(Body::from(entire_body)))
-}
-
-// Parse listen arg into array of strings.
-fn parse_addresses(listeners: clap::Values) -> Vec<String> {
-    let mut addresses = Vec::new();
-
-    for listener in listeners {
-        let port = listener.parse::<i32>();
-        let addr = match port {
-            Ok(v) => match v {
-                // It's an int.  Check that it's a valid IPv4 port.
-                1..=65535 => format!("0.0.0.0:{}", listener),
-                _ => panic!("Bad port for listener: {}", listener),
-            },
-            Err(_) => format!("{}", listener),
-        };
-        addresses.push(addr);
-    }
-    return addresses;
+    Ok(Response::new(Body::from("")))
 }
 
 #[tokio::main]
 async fn main() {
     let args = App::new("echoserver")
-        .version("0.0.3")
+        .version("0.0.4")
         .about("HTTP server that prints requests and returns an empty 200.")
         .arg(
             Arg::with_name("listen")
@@ -71,20 +66,24 @@ async fn main() {
                 .value_name("[IP:]PORT")
                 .multiple(false)
                 .required(true)
+                .index(1)
                 .help("Bind on this Port or IP:Port")
                 .takes_value(true),
         )
         .get_matches();
 
-    let addresses = parse_addresses(args.values_of("listen").unwrap());
-    let address = &addresses[0];
+    let listen_arg = args.value_of("listen").unwrap();
+    let address = match listen_arg.contains(":") {
+        true => listen_arg.to_string(),
+        false => format!("0.0.0.0:{}", listen_arg),
+    };
 
     let socket_addr: SocketAddr = address.parse().expect("Failed to parse listen address");
     let server = Server::bind(&socket_addr).serve(make_service_fn(|_| async {
         Ok::<_, hyper::Error>(service_fn(echo))
     }));
 
-    println!("Listening on {}", address);
+    eprintln!("Listening on {}", address);
     if let Err(e) = server.await {
         eprintln!("Server error: {}", e);
     }

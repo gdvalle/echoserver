@@ -1,6 +1,6 @@
 [package]
 name = "echoserver"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Greg Dallavalle <greg.dallavalle@gmail.com>"]
 edition = "2018"
 
